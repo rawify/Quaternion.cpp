@@ -1,6 +1,6 @@
 # Quaternion.c - ℍ in C++
 
-Quaternion.c is a well tested C++ library for 3D rotations. Quaternions are a compact representation of rotations and can be used everywhere, from the rotation calculation of your mobile phone over computer games to the rotation of satellites and all by avoiding the [Gimbal lock](https://en.wikipedia.org/wiki/Gimbal_lock). The library is a port of [Quaternion.js](https://github.com/rawify/Quaternion.js)
+Quaternion.c is a well tested C++ library for 3D rotations. Quaternions are a compact representation of rotations and can be used everywhere, from the attitude of a dron over to computer games to the rotation of satellites and all by avoiding the [Gimbal lock](https://en.wikipedia.org/wiki/Gimbal_lock). The library is a port of [Quaternion.js](https://github.com/rawify/Quaternion.js)
 
 
 # Examples
