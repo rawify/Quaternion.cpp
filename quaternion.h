@@ -42,6 +42,17 @@ public:
     float y;
     float z;
 
+    /* @TODO
+        union {
+        struct {
+            float x;
+            float y;
+            float z;
+        };
+        real_t vector[3] = { 0, 0, 0 };
+    };
+    */
+
     Quaternion() : w(1), x(0), y(0), z(0) {}
     Quaternion(const Quaternion &q) : w(q.w), x(q.x), y(q.y), z(q.z) {}
     Quaternion(float _x, float _y, float _z) : w(0), x(_x), y(_y), z(_z) {}
@@ -55,9 +66,17 @@ public:
 
     const Quaternion operator-() const { return Quaternion(-w, -x, -y, -z); }
     const Quaternion operator*(const Quaternion &q) const { return Quaternion(*this) *= q; }
-    const Quaternion operator+(const Quaternion &q) const { return Quaternion(*this) += q; }
-    const Quaternion operator-(const Quaternion &q) const { return Quaternion(*this) -= q; }
-    const Quaternion operator*(float scale) const { return Quaternion(*this) *= scale; }
+    const Quaternion operator*(float scale) const { return Quaternion(w * scale, x * scale, y * scale, z * scale); }
+    const Quaternion operator+(const Quaternion &q2) const
+    {
+        const Quaternion &q1 = *this;
+        return Quaternion(q1.w + q2.w, q1.x + q2.x, q1.y + q2.y, q1.z + q2.z);
+    }
+    const Quaternion operator-(const Quaternion &q2) const
+    {
+        const Quaternion &q1 = *this;
+        return Quaternion(q1.w - q2.w, q1.x - q2.x, q1.y - q2.y, q1.z - q2.z);
+    }
 
     float dot(const Quaternion &q) const;
     float norm() const;
