@@ -232,7 +232,7 @@ static const Quaternion fromEuler(float x, float y, float z)
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYX
 	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
 	return Quaternion(
-		cX * cY * c - sX * sZ * cYZ,
+		cX * cY * cZ - sX * sZ * cY,
 		sX * cY * cZ + sZ * cX * cY,
 		sX * sY * sZ + sY * cX * cZ,
 		sX * sY * cZ - sY * sZ * cX);
