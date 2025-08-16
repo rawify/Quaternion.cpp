@@ -36,7 +36,7 @@ Calculates the additive inverse, or simply it negates the quaternion
 
 Calculates the Hamilton product of two quaternions. **Note:** This function is not commutative, i.e. order matters!
 
-### Quaternion q1 * scale
+### Quaternion scalar * q1
 
 Scales a quaternion by a scalar
 
@@ -84,4 +84,3 @@ The order of `fromEuler()` can be defined at compile time by defining `QUATERNIO
 
 Copyright (c) 2025, [Robert Eisele](https://raw.org/)
 Licensed under the MIT license.
-

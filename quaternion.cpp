@@ -1,15 +1,13 @@
 /**
- * Quaternion.cpp v1.0.0 30/08/2023
+ * Quaternion.cpp v1.0.0 16/08/2025
  *
- * Copyright (c) 2023, Robert Eisele (raw.org)
+ * Copyright (c) 2025, Robert Eisele (raw.org)
  * Licensed under the MIT license.
  **/
 
 #include "quaternion.h"
 
-/**
- * Assigns a quaternion to the current quaternion
- */
+// ---------- methods ----------
 Quaternion &Quaternion::operator=(const Quaternion &q)
 {
 	w = q.w;
@@ -60,29 +58,14 @@ Quaternion &Quaternion::operator*=(float scale)
  */
 Quaternion &Quaternion::operator*=(const Quaternion &q)
 {
-	float w1 = w;
-	float x1 = x;
-	float y1 = y;
-	float z1 = z;
-
-	float w2 = q.w;
-	float x2 = q.x;
-	float y2 = q.y;
-	float z2 = q.z;
+	const float w1 = w, x1 = x, y1 = y, z1 = z;
+	const float w2 = q.w, x2 = q.x, y2 = q.y, z2 = q.z;
 
 	w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
 	x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
 	y = w1 * y2 + y1 * w2 + z1 * x2 - x1 * z2;
 	z = w1 * z2 + z1 * w2 + x1 * y2 - y1 * x2;
 	return *this;
-}
-
-/**
- * Calculates the dot product of two quaternions
- */
-float Quaternion::dot(const Quaternion &q) const
-{
-	return w * q.w + x * q.x + y * q.y + z * q.z;
 }
 
 /**
@@ -94,32 +77,17 @@ float Quaternion::norm() const
 }
 
 /**
- * Calculates the squared length/modulus/magnitude or the norm of a quaternion
- */
-float Quaternion::normSq() const
-{
-	return w * w + x * x + y * y + z * z;
-}
-
-/**
  * Normalizes the quaternion to have |Q| = 1 as long as the norm is not zero
  */
 Quaternion &Quaternion::normalize()
 {
-	float iLen = 1 / norm();
-	w *= iLen;
-	x *= iLen;
-	y *= iLen;
-	z *= iLen;
+	const float n2 = normSq();
+	const float inv = 1.0f / sqrtf(n2);
+	w *= inv;
+	x *= inv;
+	y *= inv;
+	z *= inv;
 	return *this;
-}
-
-/**
- * Calculates the conjugate of a quaternion
- */
-const Quaternion Quaternion::conjugate() const
-{
-	return Quaternion(w, -x, -y, -z);
 }
 
 /**
@@ -127,122 +95,103 @@ const Quaternion Quaternion::conjugate() const
  *
  * @link https://raw.org/proof/vector-rotation-using-quaternions/
  */
-void Quaternion::rotateVector(float &vx, float &vy, float &vz)
+void Quaternion::rotateVector(float &vx, float &vy, float &vz) const
 {
-	// t = 2q x v
-	float tx = 2. * (y * vz - z * vy);
-	float ty = 2. * (z * vx - x * vz);
-	float tz = 2. * (x * vy - y * vx);
+	// t = 2 cross(q.xyz, v)
+	const float tx = 2.f * (y * vz - z * vy);
+	const float ty = 2.f * (z * vx - x * vz);
+	const float tz = 2.f * (x * vy - y * vx);
 
-	// v + w t + q x t
+	// v + w t + cross(q.xyz, t)
 	vx = vx + w * tx + y * tz - z * ty;
 	vy = vy + w * ty + z * tx - x * tz;
 	vz = vz + w * tz + x * ty - y * tx;
 }
 
-/**
- * Creates a quaternion by a rotation given by Euler angles (multiplication order from right to left)
- *
- * If needed, define QUATERNION_EULER_ORDER for another order
- */
-static const Quaternion fromEuler(float x, float y, float z)
+const Quaternion Quaternion::fromEuler(float x, float y, float z)
 {
-	x = x * 0.5;
-	y = y * 0.5;
-	z = z * 0.5;
+	x *= 0.5f;
+	y *= 0.5f;
+	z *= 0.5f;
 
-	float cX = cosf(x);
-	float cY = cosf(y);
-	float cZ = cosf(z);
-
-	float sX = sinf(x);
-	float sY = sinf(y);
-	float sZ = sinf(z);
+	const float cX = cosf(x), sX = sinf(x);
+	const float cY = cosf(y), sY = sinf(y);
+	const float cZ = cosf(z), sZ = sinf(z);
 
 #if QUATERNION_EULER_ORDER == QUATERNION_EULER_ZXY
-	// axisAngle([0, 0, 1], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 1, 0], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sY * sZ,
 		sY * cX * cZ - sX * sZ * cY,
 		sX * sY * cZ + sZ * cX * cY,
 		sX * cY * cZ + sY * sZ * cX);
-#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYZ // roll around X, pitch around Y, yaw around Z
-	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([0, 0, 1], ψ)
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYZ
 	return Quaternion(
 		cX * cY * cZ - sX * sY * sZ,
 		sX * cY * cZ + sY * sZ * cX,
 		sY * cX * cZ - sX * sZ * cY,
 		sX * sY * cZ + sZ * cX * cY);
-#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXZ // deviceorientation
-	// axisAngle([0, 1, 0], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 0, 1], ψ)
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXZ
 	return Quaternion(
 		sX * sY * sZ + cX * cY * cZ,
 		sX * sZ * cY + sY * cX * cZ,
 		sX * cY * cZ - sY * sZ * cX,
 		sZ * cX * cY - sX * sY * cZ);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZYX
-	// axisAngle([0, 0, 1], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
 	return Quaternion(
 		sX * sY * sZ + cX * cY * cZ,
 		sZ * cX * cY - sX * sY * cZ,
 		sX * sZ * cY + sY * cX * cZ,
 		sX * cY * cZ - sY * sZ * cX);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YZX
-	// axisAngle([0, 1, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([1, 0, 0], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sY * sZ,
 		sX * sY * cZ + sZ * cX * cY,
 		sX * cY * cZ + sY * sZ * cX,
 		sY * cX * cZ - sX * sZ * cY);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XZY
-	// axisAngle([1, 0, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([0, 1, 0], ψ)
 	return Quaternion(
 		sX * sY * sZ + cX * cY * cZ,
 		sX * cY * cZ - sY * sZ * cX,
 		sZ * cX * cY - sX * sY * cZ,
 		sX * sZ * cY + sY * cX * cZ);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZYZ
-	// axisAngle([0, 0, 1], φ) * axisAngle([0, 1, 0], θ) * axisAngle([0, 0, 1], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sZ * cY,
 		sY * sZ * cX - sX * sY * cZ,
 		sX * sY * sZ + sY * cX * cZ,
 		sX * cY * cZ + sZ * cX * cY);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZXZ
-	// axisAngle([0, 0, 1], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 0, 1], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sZ * cY,
 		sX * sY * sZ + sY * cX * cZ,
 		sX * sY * cZ - sY * sZ * cX,
 		sX * cY * cZ + sZ * cX * cY);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXY
-	// axisAngle([0, 1, 0], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 1, 0], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sZ * cY,
 		sX * sY * sZ + sY * cX * cZ,
 		sX * cY * cZ + sZ * cX * cY,
 		sY * sZ * cX - sX * sY * cZ);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YZY
-	// axisAngle([0, 1, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([0, 1, 0], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sZ * cY,
 		sX * sY * cZ - sY * sZ * cX,
 		sX * cY * cZ + sZ * cX * cY,
 		sX * sY * sZ + sY * cX * cZ);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYX
-	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sZ * cY,
 		sX * cY * cZ + sZ * cX * cY,
 		sX * sY * sZ + sY * cX * cZ,
 		sX * sY * cZ - sY * sZ * cX);
 #elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XZX
-	// axisAngle([1, 0, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([1, 0, 0], ψ)
 	return Quaternion(
 		cX * cY * cZ - sX * sZ * cY,
 		sX * cY * cZ + sZ * cX * cY,
 		sY * sZ * cX - sX * sY * cZ,
 		sX * sY * sZ + sY * cX * cZ);
+#else
+#error "Unsupported QUATERNION_EULER_ORDER"
 #endif
 }
 
@@ -251,19 +200,15 @@ static const Quaternion fromEuler(float x, float y, float z)
  */
 const Quaternion Quaternion::fromAxisAngle(float x, float y, float z, float angle)
 {
-	Quaternion ret;
+	const float half = angle * 0.5f;
+	const float s = sinf(half), c = cosf(half);
 
-	float halfAngle = angle * 0.5;
-
-	float sin_2 = sinf(halfAngle);
-	float cos_2 = cosf(halfAngle);
-
-	float sin_norm = sin_2 / sqrtf(x * x + y * y + z * z);
-
-	ret.w = cos_2;
-	ret.x = x * sin_norm;
-	ret.y = y * sin_norm;
-	ret.z = z * sin_norm;
-
-	return ret;
+	// Normalize axis safely (zero vector -> identity rotation)
+	const float n2 = x * x + y * y + z * z;
+	if (n2 <= 0.f)
+	{
+		return Quaternion(c, 0.f, 0.f, 0.f);
+	}
+	const float invLen = 1.0f / sqrtf(n2);
+	return Quaternion(c, x * invLen * s, y * invLen * s, z * invLen * s);
 }
